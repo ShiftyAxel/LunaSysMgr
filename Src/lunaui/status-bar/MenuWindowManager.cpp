@@ -111,29 +111,28 @@ void MenuWindowManager::init()
 		m_sysMenu->setPos(boundingRect().x() + boundingRect().width() - m_sysMenu->boundingRect().width()/2 + offset,
 				          boundingRect().y() + m_statusBar->boundingRect().height() + m_sysMenu->boundingRect().height()/2);
 	}
+	
+	m_cornerContainer = new GraphicsItemContainer(m_boundingRect.width(),
+												  m_boundingRect.height());
 
-	if(!Settings::LunaSettings()->tabletUi) {
-		m_cornerContainer = new GraphicsItemContainer(m_boundingRect.width(),
-													  m_boundingRect.height());
+	QSize dims = RoundedCorners::topLeft().size();
 
-		QSize dims = RoundedCorners::topLeft().size();
+	m_corners[kTopLeftWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::topLeft(), m_cornerContainer);
+	m_corners[kTopRightWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::topRight(), m_cornerContainer);
+	m_corners[kBottomLeftWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::bottomLeft(), m_cornerContainer);
+	m_corners[kBottomRightWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::bottomRight(), m_cornerContainer);
 
-		m_corners[kTopLeftWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::topLeft(), m_cornerContainer);
-		m_corners[kTopRightWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::topRight(), m_cornerContainer);
-		m_corners[kBottomLeftWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::bottomLeft(), m_cornerContainer);
-		m_corners[kBottomRightWindowIndex] = new QGraphicsPixmapItem(RoundedCorners::bottomRight(), m_cornerContainer);
+	for (int i=kTopLeftWindowIndex; i <= kBottomRightWindowIndex; i++) {
+		m_corners[i]->setOffset(-dims.width()/2, -dims.height()/2);
 
-		for (int i=kTopLeftWindowIndex; i <= kBottomRightWindowIndex; i++) {
-			m_corners[i]->setOffset(-dims.width()/2, -dims.height()/2);
-
-			// disable mouse events for the corners
-			m_corners[i]->setAcceptedMouseButtons(0);
-		}
-
-		m_cornerContainer->setParentItem(this);
-
-		positionCornerWindows(m_positiveSpace);
+		// disable mouse events for the corners
+		m_corners[i]->setAcceptedMouseButtons(0);
 	}
+
+	m_cornerContainer->setParentItem(this);
+	m_cornerContainer->setZValue(-10);
+
+	positionCornerWindows(m_positiveSpace);
 }
 
 void MenuWindowManager::resize(int width, int height)
@@ -349,23 +348,21 @@ void MenuWindowManager::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
 void MenuWindowManager::positionCornerWindows(const QRect& r)
 {
-	if(!Settings::LunaSettings()->tabletUi) {
-		int i = kTopLeftWindowIndex;
-		int trueBottom = r.y() + r.height();
-		int trueRight = r.x() + r.width();
-		QRectF rect = m_corners[i]->boundingRect();
+	int i = kTopLeftWindowIndex;
+	int trueBottom = r.y() + r.height();
+	int trueRight = r.x() + r.width();
+	QRectF rect = m_corners[i]->boundingRect();
 
-		setPosTopLeft(m_corners[i], r.x(), r.y());
-	
-		i = kTopRightWindowIndex;
-		setPosTopLeft(m_corners[i], trueRight - rect.width(), r.y());
+	setPosTopLeft(m_corners[i], r.x(), r.y());
 
-		i = kBottomLeftWindowIndex;
-		setPosTopLeft(m_corners[i], r.x(), trueBottom - rect.height());
-	
-		i = kBottomRightWindowIndex;
-		setPosTopLeft(m_corners[i], trueRight - rect.width(), trueBottom - rect.height());
-	}
+	i = kTopRightWindowIndex;
+	setPosTopLeft(m_corners[i], trueRight - rect.width(), r.y());
+
+	i = kBottomLeftWindowIndex;
+	setPosTopLeft(m_corners[i], r.x(), trueBottom - rect.height());
+
+	i = kBottomRightWindowIndex;
+	setPosTopLeft(m_corners[i], trueRight - rect.width(), trueBottom - rect.height());
 }
 
 void MenuWindowManager::slotPositiveSpaceChanged(const QRect& r)
