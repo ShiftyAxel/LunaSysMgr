@@ -2084,7 +2084,10 @@ void SystemUiController::handleScreenEdgeFlickGesture(QGesture* gesture)
 		if(g->yDistance() < kFlickMinimumYLengthWithKeyboardUp)
 			return; // not long enough, so ignore it
 	}
-
+	
+	Q_EMIT signalEnterSwitch();
+	
+/*
 	if (m_inDockMode) {
 		enterOrExitDockModeUi(false);
 		return;
@@ -2119,7 +2122,8 @@ void SystemUiController::handleScreenEdgeFlickGesture(QGesture* gesture)
 		return;
 	}
 
-	Q_EMIT signalToggleLauncher();					
+	Q_EMIT signalToggleLauncher();		
+*/			
 }
 
 void SystemUiController::handleScreenEdgeSlideGesture(QGesture* gesture)
