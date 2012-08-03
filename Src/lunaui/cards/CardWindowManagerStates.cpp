@@ -765,3 +765,9 @@ void SwitchState::onEntry(QEvent* event)
     //Make sure the quicklaunch bar doesn't appear during switch
 	SystemUiController::instance()->setCardWindowMaximized(true);
 }
+// --------------------------------------------------------------------------------------------------
+
+void CardViewGestureState::cardViewGestureEvent(QGestureEvent* event)
+{
+	m_wm->handleCardViewGesture(event);
+}
