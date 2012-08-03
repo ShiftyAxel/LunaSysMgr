@@ -49,6 +49,7 @@
 #include "EmulatedCardWindow.h"
 #include "ScreenEdgeFlickGesture.h"
 #include "CardSwitchGesture.h"
+#include "CardViewGesture.h"
 #include "SoundPlayerPool.h"
 #include "DashboardWindowManager.h"
 #include "StatusBarServicesConnector.h"
@@ -86,6 +87,7 @@ SystemUiController::SystemUiController()
 	m_cardWindowAboutToMaximize = false;
 	m_cardWindowMaximized = false;
     m_switchCards = false;
+    m_cardViewGesture = false;
 	m_dashboardOpened = false;
 	m_dashboardSoftDismissable = true;
 	m_dashboardHasContent = false;
@@ -266,7 +268,7 @@ bool SystemUiController::handleGestureEvent (QGestureEvent* event)
 	if (!t && Preferences::instance()->sysUiEnableNextPrevGestures() == true) {
 		if (Settings::LunaSettings()->uiType != Settings::UI_MINIMAL && !m_emergencyMode) {
 			t = event->gesture((Qt::GestureType) SysMgrGestureScreenEdgeFlick);
-			if (t)
+			if (t && Preferences::instance()->sysUiGestureDetection() == 0)
 			{
 				handleScreenEdgeFlickGesture(t);
 				return true;
@@ -276,6 +278,13 @@ bool SystemUiController::handleGestureEvent (QGestureEvent* event)
 			if (t && Preferences::instance()->sysUiGestureDetection() == 1)
 			{
 				handleCardSwitchGesture(event);
+				return true;
+			}
+
+			t = event->gesture((Qt::GestureType) GestureCardView);
+			if (t && Preferences::instance()->sysUiGestureDetection() == 1)
+			{
+				handleCardViewGesture(event);
 				return true;
 			}
 		}
@@ -568,7 +577,7 @@ bool SystemUiController::handleKeyEvent(QKeyEvent *event)
 				return true;
 			}
             
-            if (m_switchCards) {
+            if (m_cardViewGesture || m_switchCards) {
                 Q_EMIT signalMaximizeActiveCardWindow();
             }
 
@@ -2149,4 +2158,31 @@ void SystemUiController::handleCardSwitchGesture(QGestureEvent* event)
 	}
     
     Q_EMIT signalSwitchCardEvent(event);
+}
+
+void SystemUiController::handleCardViewGesture(QGestureEvent* event)
+{
+	QGesture* t = event->gesture((Qt::GestureType) GestureCardView);
+    CardViewGesture* gesture = static_cast<CardViewGesture*>(t);
+	
+	if (!m_cardViewGesture && !m_cardWindowMaximized && gesture->state() == Qt::GestureUpdated)
+		Q_EMIT signalToggleLauncher();
+    
+    if(gesture->state() == Qt::GestureStarted || gesture->state() == Qt::GestureUpdated)
+        m_cardViewGesture = true;
+    else
+        m_cardViewGesture = false;
+    
+	if (m_deviceLocked)
+		return;
+    
+	if (m_dashboardOpened) {
+		Q_EMIT signalCloseDashboard(true);
+	}
+    
+	if (m_menuVisible) {
+		Q_EMIT signalHideMenu();
+	}
+    
+    Q_EMIT signalCardViewGestureEvent(event);
 }
